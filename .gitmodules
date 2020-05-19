@@ -1,0 +1,6 @@
+[submodule "RVO2"]
+	path = RVO2
+	url = git@github.com:snape/RVO2.git
+[submodule "Dubins-Curves"]
+	path = Dubins-Curves
+	url = git@github.com:AndrewWalker/Dubins-Curves.git
