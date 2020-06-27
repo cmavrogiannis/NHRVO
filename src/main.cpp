@@ -15,83 +15,78 @@
 constexpr float M_PI = 3.14159265358979323846f;
 #endif
 
-constexpr double TURN_RADIUS = 10.0f;
-constexpr double PATH_LOOKAHEAD = 10.0f;
-constexpr double SPEED = 10.0f;
+struct Car
+{
+    double x, y, theta;
 
+    double goal_x, goal_y, goal_theta;
+    // TODO: Ensure these values are correct
+    // Radians
+    static constexpr double MaxSteeringAngle = M_PI / 4.0;
+
+    // Meters
+    static constexpr double Length = 0.3;
+    static constexpr double TurnRadius = Car::Length / std::tan(Car::MaxSteeringAngle);
+
+    // Meters / sec
+    static constexpr double Speed = 1.0;
+};
+
+
+constexpr double SIM_DT = 0.16;
 constexpr float MAX_TIMESTEP = 10000.0f;
 
 constexpr int NUM_AGENTS = 2;
-std::vector< std::pair<RVO::Vector2, float> > goals;
-std::vector<RVO::Vector2> prev_positions;
-std::vector<float> facing;
+
+std::vector<Car> agents;
+
+void car_kinematics(Car &c, double steering_angle, double speed, double dt)
+{
+    // TODO: Ensure these are correct MUSHR kinematics
+    c.x += speed * std::cos(c.theta) * dt;
+    c.y += speed * std::sin(c.theta) * dt;
+    c.theta += speed / Car::Length * std::tan(steering_angle);
+}
 
 void setup(RVO::RVOSimulator &sim, int num_agents)
 {
-    sim.setTimeStep(0.16f);
-    sim.setAgentDefaults(15.0, // neighborDist
-                         10.0, // maxNeighbors
+    sim.setTimeStep(SIM_DT);
+    // Initial velocity is 0
+    sim.setAgentDefaults(15.0f, // neighborDist
+                         static_cast<size_t>(10), // maxNeighbors
                          10.0f, // timeHorizon
-                         10.0f, // radius
-                         1.5, // maxSpeed
-                         2.0f); // velocity
+                         10.0f, // timeHorizonObst
+                         static_cast<float>(Car::Speed * SIM_DT + 0.1), // radius
+                         static_cast<float>(Car::Speed)); // maxSpeed
+    
 
     for(int i = 0; i < num_agents; i++)
     {
-        RVO::Vector2 start_pos = 200.0f * RVO::Vector2(std::cos(i * 2.0f * M_PI / NUM_AGENTS),
-                                                       std::sin(i * 2.0f * M_PI / NUM_AGENTS));
+        RVO::Vector2 start_pos = 10.0f * RVO::Vector2(std::cos(i * 2.0f * M_PI / NUM_AGENTS),
+                                                      std::sin(i * 2.0f * M_PI / NUM_AGENTS));
         sim.addAgent(start_pos);
-        goals.push_back(std::make_pair(-start_pos, 180.0f));
-        prev_positions.push_back(start_pos);
-        facing.push_back(0.0f); // Make everyone facing upwards
+        
+        Car new_agent = { start_pos.x(), start_pos.y(), 0.0f, -start_pos.x(), -start_pos.y(), M_PI };
+        agents.push_back(new_agent);
     }
 }
 
 void output_positions(RVO::RVOSimulator &sim)
 {
     std::cout << sim.getGlobalTime();
-    for(size_t i = 0; i < sim.getNumAgents(); i++)
-        std::cout << " " << sim.getAgentPosition(i);
-
+    for(const Car &c : agents)
+        std::cout << " (" << c.x << "," << c.y << "," << c.theta << ")";
     std::cout << std::endl;
 }
 
-RVO::Vector2 compute_preferred_velocity(RVO::Vector2 current_position, int agent)
+RVO::Vector2 compute_preferred_velocity(const Car &c)
 {
-    double p1[3] = {
-        static_cast<double>(current_position.x()),
-        static_cast<double>(current_position.y()),
-        static_cast<double>(facing[agent]),
-    };
-
-    double p2[3] = {
-        static_cast<double>(goals[agent].first.x()),
-        static_cast<double>(goals[agent].first.y()),
-        static_cast<double>(goals[agent].second),
-    };
-
-    DubinsPath path;
-    if(int err = dubins_shortest_path(&path, p1, p2, TURN_RADIUS))
-    {
-        RVO::Vector2 default_vel = SPEED * RVO::Vector2(std::cos(facing[agent]), std::sin(facing[agent]));
-        std::cerr << "Failed to compute path, error number " << err << ", returning " << default_vel << '\n';
-        return default_vel;
-    }
-
-    if(dubins_path_length(&path) <= PATH_LOOKAHEAD)
-        return RVO::Vector2(0, 0);
-    
-    double q[3];
-    if(dubins_path_sample(&path, PATH_LOOKAHEAD, q))
-    {
-        std::cerr << "Failed to sample path\n";
-        return RVO::Vector2(0, 0);
-    }
-
-    RVO::Vector2 sampled_pos(q[0], q[1]);
-    RVO::Vector2 velocity = sampled_pos - current_position;
-    velocity = SPEED * RVO::normalize(velocity);
-    return velocity;
+    RVO::Vector2 curr(c.x, c.y);
+    RVO::Vector2 goal(c.goal_x, c.goal_y);
+    RVO::Vector2 vel = goal - curr;
+    if(RVO::absSq(vel) > 1.0f)
+        vel = RVO::normalize(vel);
+    return vel;
 }
 
 void set_preferred_velocities(RVO::RVOSimulator &sim)
@@ -99,42 +94,69 @@ void set_preferred_velocities(RVO::RVOSimulator &sim)
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for(int i = 0; i < sim.getNumAgents(); i++)
+    for(int i = 0; i < agents.size(); i++)
     {
-        RVO::Vector2 current_position = sim.getAgentPosition(i);
-        RVO::Vector2 preferred_velocity = compute_preferred_velocity(current_position, i);
-        prev_positions[i] = current_position;
+        RVO::Vector2 preferred_velocity = compute_preferred_velocity(agents[i]);
         sim.setAgentPrefVelocity(i, preferred_velocity);
     }
 }
 
-void update_facing(RVO::RVOSimulator &sim)
+void perform_actual_movement(RVO::RVOSimulator &sim)
 {
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for(int i = 0; i < sim.getNumAgents(); i++)
+    for(int i = 0; i < agents.size(); i++)
     {
-        RVO::Vector2 new_position = sim.getAgentPosition(i);
-        RVO::Vector2 old_position = prev_positions[i];
-        RVO::Vector2 old_facing_vec(std::cos(facing[i]), std::sin(facing[i]));
-        RVO::Vector2 actual_velocity = RVO::normalize(new_position - old_position);
-        float dot_product = std::max(-1.0f, std::min(1.0f, old_facing_vec * actual_velocity));
-        float dtheta = std::acos(dot_product);
-        if(actual_velocity.y() > old_facing_vec.y())
-            facing[i] += dtheta;
-        else
-            facing[i] -= dtheta;
+        RVO::Vector2 new_pos = sim.getAgentPosition(i);
+        double p1[3] = { agents[i].x, agents[i].y, agents[i].theta };
+        // TODO: Make target orientation be towards goal
+        double p2[3] = { new_pos.x(), new_pos.y(), agents[i].theta };
+        DubinsPath path;
+        if(int err = dubins_shortest_path(&path, p1, p2, Car::TurnRadius))
+        {
+            //std::cerr << "Failed to compute path, error number " << err << '\n';
+            car_kinematics(agents[i], 0, Car::Speed, SIM_DT);
+            return;
+        }
+
+        // TODO: Capture case where first segment has length 0. 
+        switch(path.type)
+        {
+        case LSL:
+        case LSR:
+        case LRL:
+            car_kinematics(agents[i], -Car::MaxSteeringAngle, Car::Speed, SIM_DT);
+            break;
+        case RSL:
+        case RSR:
+        case RLR:
+            car_kinematics(agents[i], Car::MaxSteeringAngle, Car::Speed, SIM_DT);
+            break;
+        }
+    }
+}
+
+void update_positions_in_sim(RVO::RVOSimulator &sim)
+{
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for(int i = 0; i < agents.size(); i++)
+    {
+        RVO::Vector2 pos(agents[i].x, agents[i].y);
+        sim.setAgentPosition(i, pos);
     }
 }
 
 bool goals_reached(RVO::RVOSimulator &sim)
 {
-    for(int i = 0; i < sim.getNumAgents(); i++)
+    for(const Car &c : agents)
     {
-        RVO::Vector2 delta = sim.getAgentPosition(i) - goals[i].first;
-        float radius_squared = sim.getAgentRadius(i) * sim.getAgentRadius(i);
-        if(RVO::absSq(delta) > radius_squared)
+        double dist_x_sq = (c.goal_x - c.x) * (c.goal_x - c.x);
+        double dist_y_sq = (c.goal_y - c.y) * (c.goal_y - c.y);
+        double dist_sq = dist_x_sq + dist_y_sq;
+        if(dist_sq > Car::Length * Car::Length)
             return false;
     }
     return true;
@@ -150,7 +172,8 @@ int main()
         output_positions(sim);
         set_preferred_velocities(sim);
         sim.doStep();
-        update_facing(sim);
+        perform_actual_movement(sim);
+        update_positions_in_sim(sim);
     } while(!goals_reached(sim) && sim.getGlobalTime() < MAX_TIMESTEP);
 
     return 0;

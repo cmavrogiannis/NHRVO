@@ -16,8 +16,6 @@ if(OpenMP_CXX_FOUND)
   target_link_libraries(NHRVO OpenMP::OpenMP_CXX)
 endif()
 
-configure_file(visualize.py visualize.py)
-
 include_directories(
   RVO2/src
   Dubins-Curves/include
@@ -27,7 +25,7 @@ target_link_libraries(NHRVO
   RVO)
 
 add_custom_target(visualize
-  COMMAND ./NHRVO | python3 visualize.py
+  COMMAND ./NHRVO | python3 ${CMAKE_SOURCE_DIR}/visualize.py
   VERBATIM)
 
 add_dependencies(visualize NHRVO)
