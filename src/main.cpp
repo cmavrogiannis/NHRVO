@@ -42,10 +42,12 @@ std::vector<Car> agents;
 
 void car_kinematics(Car &c, double steering_angle, double speed, double dt)
 {
-    // TODO: Ensure these are correct MUSHR kinematics
-    c.x += speed * std::cos(c.theta) * dt;
-    c.y += speed * std::sin(c.theta) * dt;
-    c.theta += speed / Car::Length * std::tan(steering_angle);
+
+    c.x += (Car::Length / std::tan(steering_angle))*(-sin(c.theta));
+    c.y += (Car::Length / std::tan(steering_angle))*cos(c.theta);
+    c.theta += (speed / Car::Length) * std::tan(steering_angle) * dt;
+    c.x += (Car::Length / std::tan(steering_angle))*sin(c.theta);
+    c.y += (Car::Length / std::tan(steering_angle))*(-cos(c.theta));
 }
 
 void setup(RVO::RVOSimulator &sim, int num_agents)
@@ -178,4 +180,5 @@ int main()
 
     return 0;
 }
+
 
