@@ -33,7 +33,7 @@ struct Car
 };
 
 
-constexpr double SIM_DT = 0.16;
+constexpr double SIM_DT = 0.1;
 constexpr float MAX_TIMESTEP = 10000.0f;
 
 constexpr int NUM_AGENTS = 2;
@@ -113,7 +113,11 @@ void perform_actual_movement(RVO::RVOSimulator &sim)
         RVO::Vector2 new_pos = sim.getAgentPosition(i);
         double p1[3] = { agents[i].x, agents[i].y, agents[i].theta };
         // TODO: Make target orientation be towards goal
-        double p2[3] = { new_pos.x(), new_pos.y(), agents[i].theta };
+        RVO::Vector2 goal(agents[i].goal_x, agents[i].goal_y);
+        RVO::Vector2 q_orca(new_pos.x(), new_pos.y());
+        RVO::Vector2 vec2goal = goal - q_orca;
+	double p2[3] = { new_pos.x(), new_pos.y(), atan2(vec2goal.y(), vec2goal.x()) };
+        //double p2[3] = { new_pos.x(), new_pos.y(), agents[i].theta };
         DubinsPath path;
         if(int err = dubins_shortest_path(&path, p1, p2, Car::TurnRadius))
         {
