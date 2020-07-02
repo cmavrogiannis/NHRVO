@@ -6,11 +6,13 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib.collections import PatchCollection
 
-CAR_LENGTH, CAR_WIDTH = 2, 1
+SCALE_FACTOR = 10
+
+CAR_LENGTH, CAR_WIDTH = 0.3 * SCALE_FACTOR, 0.1 * SCALE_FACTOR
 
 fig, ax = plt.subplots(1, 1, figsize=(7, 7))
-ax.set_xlim(-20, 20)
-ax.set_ylim(-20, 20)
+ax.set_xlim(-10 * SCALE_FACTOR, 10 * SCALE_FACTOR)
+ax.set_ylim(-10 * SCALE_FACTOR, 10 * SCALE_FACTOR)
 
 frames = []
 for line in fileinput.input():
@@ -18,8 +20,8 @@ for line in fileinput.input():
     frame = []
     for pos in positions[1:]:
         coords = pos.split(',')
-        x = float(coords[0][1:])
-        y = float(coords[1])
+        x = float(coords[0][1:]) * SCALE_FACTOR
+        y = float(coords[1]) * SCALE_FACTOR
         th = math.degrees(float(coords[2][:-1]))
         frame.append((x, y, th))
     frames.append(frame)
