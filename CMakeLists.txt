@@ -10,6 +10,8 @@ add_executable(global_planner "src/global_planner.cpp"
   "src/NHRVO.h")
 add_executable(local_planner "src/local_planner.cpp"
   "src/NHRVO.h")
+add_executable(holonomic "src/holonomic.cpp"
+  "src/NHRVO.h")
 
 if(OpenMP_CXX_FOUND)
   target_link_libraries(global_planner OpenMP::OpenMP_CXX)
@@ -27,6 +29,9 @@ target_link_libraries(global_planner
 target_link_libraries(local_planner
   RVO)
 
+target_link_libraries(holonomic
+  RVO)
+
 add_custom_target(visualize_global
   COMMAND ./global_planner | python3 ${CMAKE_SOURCE_DIR}/visualize.py
   VERBATIM)
@@ -35,5 +40,10 @@ add_custom_target(visualize_local
   COMMAND ./local_planner | python3 ${CMAKE_SOURCE_DIR}/visualize.py
   VERBATIM)
 
+add_custom_target(visualize_holonomic
+  COMMAND ./holonomic | python3 ${CMAKE_SOURCE_DIR}/visualize.py
+  VERBATIM)
+
 add_dependencies(visualize_global global_planner)
 add_dependencies(visualize_local local_planner)
+add_dependencies(visualize_holonomic holonomic)

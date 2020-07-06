@@ -17,6 +17,11 @@ void set_preferred_velocities(RVO::RVOSimulator &sim)
 #endif
     for(int i = 0; i < agents.size(); i++)
     {
+        if(car_is_at_goal(agents[i]))
+        {
+            sim.setAgentPrefVelocity(i, RVO::Vector2(0, 0));
+            continue;
+        }
         RVO::Vector2 preferred_velocity = compute_preferred_velocity(agents[i]);
         sim.setAgentPrefVelocity(i, preferred_velocity);
     }
@@ -29,6 +34,9 @@ void perform_actual_movement(RVO::RVOSimulator &sim)
 #endif
     for(int i = 0; i < agents.size(); i++)
     {
+        if(car_is_at_goal(agents[i]))
+            continue;
+
         RVO::Vector2 new_pos = sim.getAgentPosition(i);
         double p1[3] = { agents[i].x, agents[i].y, agents[i].theta };
         // TODO: Make target orientation be towards goal
@@ -78,5 +86,3 @@ int main()
 
     return 0;
 }
-
-

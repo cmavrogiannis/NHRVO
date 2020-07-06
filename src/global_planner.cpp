@@ -1,5 +1,19 @@
 #include "NHRVO.h"
 
+
+/*
+  0) Start at q_0 = (x, y, theta)
+  1) Compute Dubins plan 
+  2) Take first control by Dubins, get new configuration along path
+  3) Compute preferred velocity and give to ORCA, where preferred velocity is
+     velocity from current position to waypoint along path
+  4) Run ORCA for one timestep 
+  5) Get new desired configuration from ORCA
+  6) Find a control that takes you as close as possible to that new desired configuration
+     using PID (or some other controller)
+  7) Terminate if close enough to desired position.
+*/
+
 RVO::Vector2 compute_preferred_velocity(const Car &c)
 {
     RVO::Vector2 curr(c.x, c.y);

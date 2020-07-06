@@ -42,21 +42,28 @@ constexpr int NUM_AGENTS = 2;
 
 std::vector<Car> agents;
 
+bool car_is_at_goal(const Car &c)
+{
+    double dist_x_sq = (c.goal_x - c.x) * (c.goal_x - c.x);
+    double dist_y_sq = (c.goal_y - c.y) * (c.goal_y - c.y);
+    double dist_sq = dist_x_sq + dist_y_sq;
+    return dist_sq <= Car::Length * Car::Length;
+}
+
 void car_kinematics(Car &c, double steering_angle, double speed, double dt)
 {
-
-    c.x += (Car::Length / std::tan(steering_angle))*(-sin(c.theta));
-    c.y += (Car::Length / std::tan(steering_angle))*cos(c.theta);
-    c.theta += (speed / Car::Length) * std::tan(steering_angle) * dt;
-    c.x += (Car::Length / std::tan(steering_angle))*sin(c.theta);
-    c.y += (Car::Length / std::tan(steering_angle))*(-cos(c.theta));
+    double L_tand = Car::Length / std::tan(steering_angle);
+    double theta_old = c.theta;
+    c.theta += speed / Car::Length * std::tan(steering_angle) * dt;
+    c.x += L_tand * (std::sin(c.theta) - std::sin(theta_old));
+    c.y += L_tand * (-std::cos(c.theta) + std::cos(theta_old));
 }
 
 void setup(RVO::RVOSimulator &sim, int num_agents)
 {
     sim.setTimeStep(SIM_DT);
     // Initial velocity is 0
-    sim.setAgentDefaults(15.0f, // neighborDist
+    sim.setAgentDefaults(2.0f, // neighborDist
                          static_cast<size_t>(10), // maxNeighbors
                          10.0f, // timeHorizon
                          10.0f, // timeHorizonObst
@@ -99,10 +106,7 @@ bool goals_reached(RVO::RVOSimulator &sim)
 {
     for(const Car &c : agents)
     {
-        double dist_x_sq = (c.goal_x - c.x) * (c.goal_x - c.x);
-        double dist_y_sq = (c.goal_y - c.y) * (c.goal_y - c.y);
-        double dist_sq = dist_x_sq + dist_y_sq;
-        if(dist_sq > Car::Length * Car::Length)
+        if(!car_is_at_goal(c))
             return false;
     }
     return true;
