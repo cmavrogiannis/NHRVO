@@ -38,7 +38,7 @@ struct Car
 constexpr double SIM_DT = 0.1;
 constexpr float MAX_TIMESTEP = 10000.0f;
 
-constexpr int NUM_AGENTS = 2;
+constexpr int NUM_AGENTS = 3;
 
 std::vector<Car> agents;
 
@@ -75,9 +75,12 @@ void setup(RVO::RVOSimulator &sim, int num_agents)
     {
         RVO::Vector2 start_pos = 10.0f * RVO::Vector2(std::cos(i * 2.0f * M_PI / NUM_AGENTS),
                                                       std::sin(i * 2.0f * M_PI / NUM_AGENTS));
+        RVO::Vector2 goal_pos = -start_pos;
+        RVO::Vector2 vec2goal = goal_pos - start_pos;
+        double theta = std::atan2(vec2goal.y(), vec2goal.x());
         sim.addAgent(start_pos);
-        
-        Car new_agent = { start_pos.x(), start_pos.y(), 0.0f, -start_pos.x(), -start_pos.y(), M_PI };
+
+        Car new_agent = { start_pos.x(), start_pos.y(), theta, goal_pos.x(), goal_pos.y(), theta };
         agents.push_back(new_agent);
     }
 }

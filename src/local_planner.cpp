@@ -39,7 +39,6 @@ void perform_actual_movement(RVO::RVOSimulator &sim)
 
         RVO::Vector2 new_pos = sim.getAgentPosition(i);
         double p1[3] = { agents[i].x, agents[i].y, agents[i].theta };
-        // TODO: Make target orientation be towards goal
         RVO::Vector2 goal(agents[i].goal_x, agents[i].goal_y);
         RVO::Vector2 q_orca(new_pos.x(), new_pos.y());
         RVO::Vector2 vec2goal = goal - q_orca;
