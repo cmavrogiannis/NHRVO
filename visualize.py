@@ -11,8 +11,8 @@ SCALE_FACTOR = 10
 CAR_LENGTH, CAR_WIDTH = 0.3 * SCALE_FACTOR, 0.1 * SCALE_FACTOR
 
 fig, ax = plt.subplots(1, 1, figsize=(7, 7))
-ax.set_xlim(-10 * SCALE_FACTOR, 10 * SCALE_FACTOR)
-ax.set_ylim(-10 * SCALE_FACTOR, 10 * SCALE_FACTOR)
+ax.set_xlim(-15 * SCALE_FACTOR, 15 * SCALE_FACTOR)
+ax.set_ylim(-15 * SCALE_FACTOR, 15 * SCALE_FACTOR)
 
 frames = []
 for line in fileinput.input():

@@ -52,18 +52,18 @@ void perform_actual_movement(RVO::RVOSimulator &sim)
             return;
         }
 
-        // TODO: Capture case where first segment has length 0. 
-        switch(path.type)
+        DubinsSegmentType dir = get_first_nonzero_segment(path);
+        switch(dir)
         {
-        case LSL:
-        case LSR:
-        case LRL:
+        case L:
+            car_kinematics(agents[i], Car::MaxSteeringAngle, Car::Speed, SIM_DT);
+            break;
+        case R:
             car_kinematics(agents[i], -Car::MaxSteeringAngle, Car::Speed, SIM_DT);
             break;
-        case RSL:
-        case RSR:
-        case RLR:
-            car_kinematics(agents[i], Car::MaxSteeringAngle, Car::Speed, SIM_DT);
+        case S:
+        default:
+            car_kinematics(agents[i], 0.0, Car::Speed, SIM_DT);
             break;
         }
     }
