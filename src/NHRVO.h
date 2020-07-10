@@ -38,7 +38,7 @@ struct Car
 constexpr double SIM_DT = 0.1;
 constexpr float MAX_TIMESTEP = 10000.0f;
 
-constexpr int NUM_AGENTS = 3;
+constexpr int NUM_AGENTS = 2;
 
 std::vector<Car> agents;
 
