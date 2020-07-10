@@ -2,8 +2,8 @@
 
 double compute_steering_angle(const RVO::RVOSimulator &sim, int i)
 {
-    constexpr double P = 0.15;
-    constexpr double D = 0.2;
+    constexpr double P = 0.12;
+    constexpr double D = 0.1;
 
     RVO::Vector2 ref = sim.getAgentPosition(i);
     RVO::Vector2 curr(agents[i].x, agents[i].y);
@@ -11,12 +11,12 @@ double compute_steering_angle(const RVO::RVOSimulator &sim, int i)
     double c = std::cos(agents[i].theta);
     double s = std::sin(agents[i].theta);
 
-    RVO::Vector2 p = curr - ref;
-    double error_at = c * p.x() + s * p.y();
-    double error_ct = -s * p.x() + c * p.y();
+    RVO::Vector2 p = ref - curr;
+    double error_at = c * p.x() + -s * p.y();
+    double error_ct = s * p.x() + c * p.y();
 
     double gain_p = error_ct;
-    double gain_d = std::sin(std::atan2(error_ct, error_at));
+    double gain_d = std::sin(std::atan(error_ct/error_at));
     return P * gain_p + D * gain_d;
 }
 
