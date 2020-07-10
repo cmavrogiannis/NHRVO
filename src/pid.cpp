@@ -2,8 +2,8 @@
 
 double compute_steering_angle(const RVO::RVOSimulator &sim, int i)
 {
-    constexpr double P = 0.12;
-    constexpr double D = 0.1;
+    constexpr double P = 0.2;
+    constexpr double D = 0.01;
 
     RVO::Vector2 ref = sim.getAgentPosition(i);
     RVO::Vector2 curr(agents[i].x, agents[i].y);
