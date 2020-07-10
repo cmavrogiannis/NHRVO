@@ -58,4 +58,4 @@ add_custom_target(visualize_pid
 add_dependencies(visualize_global global_planner)
 add_dependencies(visualize_local local_planner)
 add_dependencies(visualize_holonomic holonomic)
-add_dependencies(visualize_holonomic pid)
+add_dependencies(visualize_pid pid)
