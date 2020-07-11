@@ -38,7 +38,7 @@ struct Car
 constexpr double SIM_DT = 0.1;
 constexpr float MAX_TIMESTEP = 10000.0f;
 
-constexpr int NUM_AGENTS = 2;
+constexpr int NUM_AGENTS = 4;
 
 std::vector<Car> agents;
 
@@ -52,7 +52,7 @@ bool car_is_at_goal(const Car &c)
 
 void car_kinematics(Car &c, double steering_angle, double speed, double dt)
 {
-    if(steering_angle <= 1e-5)
+    if(std::abs(steering_angle) <= 1e-3)
     {
         c.x += std::cos(c.theta) * speed * dt;
         c.y += std::sin(c.theta) * speed * dt;
@@ -132,9 +132,9 @@ void setup(RVO::RVOSimulator &sim, int num_agents)
 {
     sim.setTimeStep(SIM_DT);
     // Initial velocity is 0
-    sim.setAgentDefaults(5.0f, // neighborDist
+    sim.setAgentDefaults(10.0f, // neighborDist
                          static_cast<size_t>(10), // maxNeighbors
-                         5.0f, // timeHorizon
+                         10.0f, // timeHorizon
                          2.0f, // timeHorizonObst
                          static_cast<float>(Car::Speed * SIM_DT + .8), // radius
                          static_cast<float>(Car::Speed)); // maxSpeed
@@ -147,9 +147,10 @@ void setup(RVO::RVOSimulator &sim, int num_agents)
         RVO::Vector2 goal_pos = -start_pos;
         RVO::Vector2 vec2goal = goal_pos - start_pos;
         double theta = std::atan2(vec2goal.y(), vec2goal.x());
+        double goal_theta = theta;
         sim.addAgent(start_pos);
 
-        Car new_agent = { start_pos.x(), start_pos.y(), theta, goal_pos.x(), goal_pos.y(), theta };
+        Car new_agent = { start_pos.x(), start_pos.y(), theta, goal_pos.x(), goal_pos.y(), goal_theta };
         agents.push_back(new_agent);
     }
 }
