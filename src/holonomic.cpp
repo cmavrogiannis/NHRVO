@@ -10,8 +10,8 @@ void set_preferred_velocities(RVO::RVOSimulator &sim)
         RVO::Vector2 curr(agents[i].x, agents[i].y);
         RVO::Vector2 goal(agents[i].goal_x, agents[i].goal_y);
         RVO::Vector2 preferred_velocity = goal - curr;
-        if(RVO::absSq(preferred_velocity) > 1.0f)
-            preferred_velocity = RVO::normalize(preferred_velocity);
+        //if(RVO::absSq(preferred_velocity) > 1.0f)
+        //    preferred_velocity = RVO::normalize(preferred_velocity);
         sim.setAgentPrefVelocity(i, preferred_velocity);
     }
 }

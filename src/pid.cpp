@@ -2,8 +2,8 @@
 
 double compute_steering_angle(const RVO::RVOSimulator &sim, int i)
 {
-    constexpr double P = 0.2;
-    constexpr double D = 0.01;
+    constexpr double P = 10000;
+    constexpr double D = 0;
 
     RVO::Vector2 ref = sim.getAgentPosition(i);
     RVO::Vector2 curr(agents[i].x, agents[i].y);
@@ -11,9 +11,9 @@ double compute_steering_angle(const RVO::RVOSimulator &sim, int i)
     double c = std::cos(agents[i].theta);
     double s = std::sin(agents[i].theta);
 
-    RVO::Vector2 p = ref - curr;
-    double error_at = c * p.x() + -s * p.y();
-    double error_ct = s * p.x() + c * p.y();
+    RVO::Vector2 p = curr - ref;
+    double error_at = c * p.x() + s * p.y();
+    double error_ct = -s * p.x() + c * p.y();
 
     double gain_p = error_ct;
     double gain_d = std::sin(std::atan(error_ct/error_at));
@@ -25,8 +25,8 @@ RVO::Vector2 compute_preferred_velocity(const Car &c)
     RVO::Vector2 curr(c.x, c.y);
     RVO::Vector2 goal(c.goal_x, c.goal_y);
     RVO::Vector2 vel = goal - curr;
-    if(RVO::absSq(vel) > 1.0f)
-        vel = RVO::normalize(vel);
+    //if(RVO::absSq(vel) > 1.0f)
+    //    vel = RVO::normalize(vel);
     return vel;
 }
 

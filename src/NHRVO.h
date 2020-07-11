@@ -52,7 +52,7 @@ bool car_is_at_goal(const Car &c)
 
 void car_kinematics(Car &c, double steering_angle, double speed, double dt)
 {
-    if(steering_angle <= 1e-2)
+    if(steering_angle <= 1e-5)
     {
         c.x += std::cos(c.theta) * speed * dt;
         c.y += std::sin(c.theta) * speed * dt;
